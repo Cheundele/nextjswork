@@ -16,25 +16,30 @@ export default function UserPrompts() {
   const { user } = useAuth()
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false)
+      return
+    }
+  
+    const userId = user.id 
+
     let cancelled = false
 
     async function loadPrompts() {
+      setLoading(true)
+
       try {
         const { data, error } = await supabase
           .from("memberprompts")
           .select("*")
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
 
-        if (error) {
-          console.error("Prompt load error:", error)
-          return
-        }
-
-        if (!cancelled && data) {
+        if (!cancelled && !error && data) {
           setPrompts(data)
         }
       } catch (err) {
-        console.error("Unexpected prompt error:", err)
+        console.error("Prompt load error:", err)
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -47,7 +52,7 @@ export default function UserPrompts() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [user])
 
 
   if (loading) return <div>Loading prompts...</div>
