@@ -64,7 +64,7 @@ export default function UserPrompts() {
   }, [authLoading, user])
 
   if (authLoading) return <div>Checking session…</div>
-  if (loading) return <div>Loading prompts…</div>
+  //if (loading) return <div>Loading prompts…</div>
 
   async function insertPrompt() {
     if (!user) return
