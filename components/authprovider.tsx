@@ -26,61 +26,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    console.log("[Auth] FORCE CLEAR LOADING")
-    setLoading(false)
-  }, [])
+ useEffect(() => {
+  let mounted = true
+  console.log("[Auth] provider mounted")
 
-  /*useEffect(() => {
-    let mounted = true
-    console.log("[Auth] useEffect mounted")
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Auth] auth event:", event)
 
-    async function resolveInitialSession() {
-      const { data: { session } } = await supabase.auth.getSession()
       if (!mounted) return
 
-      if (!session?.user) {
-        setUser(null)
+      const user = session?.user ?? null
+      setUser(user)
+
+      if (!user) {
         setProfile(null)
         setLoading(false)
+        return
       }
-    }
 
-    resolveInitialSession()
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .eq("id", user.id)
+        .single()
 
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange(async (_event, session) => {
-        console.log("[Auth] auth event:", _event)
+      if (!mounted) return
 
-        if (!mounted) return
+      if (!error) {
+        setProfile(profileData ?? null)
+      } else {
+        setProfile(null)
+      }
 
-        const user = session?.user ?? null
-        setUser(user)
-        console.log("[Auth] user: ", user)
+      setLoading(false)
+    })
 
-        if (!user) {
-          setProfile(null)
-          setLoading(false)
-          return
-        }
+  return () => {
+    mounted = false
+    subscription.unsubscribe()
+  }
+}, [])
 
-        const { data: profileData, error } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .eq("id", user.id)
-          .single()
-
-        if (!mounted) return
-
-        if (!error) setProfile(profileData ?? null)
-        setLoading(false)
-      })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])*/
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
