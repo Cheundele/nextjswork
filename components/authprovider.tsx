@@ -27,10 +27,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     async function initAuth() {
       //await new Promise(res => setTimeout(res, 50))
       const { data: { session } } = await supabase.auth.getSession()
       const currentUser = session?.user ?? null
+
+      if (!mounted) return
+
       setUser(currentUser)
 
       if (currentUser) {
@@ -40,7 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select("id, display_name")
           .eq("id", currentUser.id)
           .single()
-        setProfile(profileData ?? null)
+
+        if (mounted) {
+          setProfile(profileData ?? null)
+        }
+        else {
+          setProfile(null)
+        }
       }
 
       setLoading(false)
@@ -72,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => {
+      mounted = false
       listener.subscription.unsubscribe()
     }
   }, [])
