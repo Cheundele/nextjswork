@@ -28,87 +28,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log("[AuthProvider] mounted")
-    let mounted = true
-
-    async function loadSession() {
-      console.log("[AuthProvider] loadSession start")
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        const currentUser = session?.user ?? null
-        console.log("[AuthProvider] getSession user:", currentUser)
-        if (!mounted) return
-
-        setUser(currentUser)
-
-        if (currentUser) {
-          const { data: profileData, error } = await supabase
-            .from("profiles")
-            .select("id, display_name")
-            .eq("id", currentUser.id)
-            .single()
-          console.log("[AuthProvider] profile fetch:", profileData, "error:", error)
-          if (!mounted) return
-          setProfile(error ? null : profileData ?? null)
-        }
-      } catch (err) {
-        console.error("[AuthProvider] getSession error:", err)
-        if (!mounted) return
-        setUser(null)
-        setProfile(null)
-      } finally {
-        if (mounted) {
-          console.log("[AuthProvider] setLoading(false)")
-          setLoading(false)
-        }
-      }
-    }
-
-    loadSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        console.log("[AuthProvider] onAuthStateChange event:", _event, "session:", session)
-        if (!mounted) return
+      async (event, session) => {
+        console.log("[AuthProvider] onAuthStateChange event:", event)
 
-        const newUser = session?.user ?? null
-        setUser(newUser)
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
 
-        if (!newUser) {
-          console.log("[AuthProvider] user logged out")
+        if (!currentUser) {
+          console.log("[AuthProvider] user is null, clearing profile")
           setProfile(null)
           setLoading(false)
           return
         }
 
+        console.log("[AuthProvider] fetching profile for user:", currentUser.id)
         try {
           const { data: profileData, error } = await supabase
             .from("profiles")
             .select("id, display_name")
-            .eq("id", newUser.id)
+            .eq("id", currentUser.id)
             .single()
-          console.log("[AuthProvider] profile fetch on event:", profileData, "error:", error)
-          if (!mounted) return
-          setProfile(error ? null : profileData ?? null)
+
+          if (error) {
+            console.error("[AuthProvider] profile fetch error:", error)
+            setProfile(null)
+          } else {
+            console.log("[AuthProvider] profile loaded:", profileData)
+            setProfile(profileData)
+          }
         } catch (err) {
-          console.error("[AuthProvider] profile fetch error on event:", err)
-          if (!mounted) return
+          console.error("[AuthProvider] unexpected profile fetch error:", err)
           setProfile(null)
         } finally {
-          if (mounted) {
-            console.log("[AuthProvider] setLoading(false) after event")
-            setLoading(false)
-          }
+          setLoading(false)
         }
       }
     )
 
     return () => {
-      mounted = false
+      console.log("[AuthProvider] unsubscribing auth listener")
       listener.subscription.unsubscribe()
-      console.log("[AuthProvider] unmounted and unsubscribed")
     }
   }, [])
 
