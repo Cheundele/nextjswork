@@ -48,6 +48,7 @@ export default function UserPrompts() {
         if (alive) setPrompts([])
       } finally {
         if (alive) setLoading(false)
+        console.log("Is this component alive?", alive)
       }
     }
 
