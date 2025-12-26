@@ -17,11 +17,7 @@ export default function UserPrompts() {
 
   // Load prompts whenever auth finishes and user is available
   useEffect(() => {
-    console.log("[AUTH_LOADING]", authLoading)
-    if (authLoading) return // wait until auth is settled
-
-    console.log("[USER]", user)
-    console.log("[USER_ID]", user?.id)
+    console.log("[UserPrompts] user changed:", user)
     if (!user?.id) {
       setPrompts([])
       setLoading(false)
@@ -29,39 +25,32 @@ export default function UserPrompts() {
     }
 
     let alive = true
-
-    async function loadPrompts(userId: string) {
+    async function loadPrompts() {
       setLoading(true)
       try {
         const { data, error } = await supabase
           .from("memberprompts")
           .select("*")
-          .eq("user_id", userId)
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false })
 
         if (!alive) return
 
-        if (error) {
-          console.error("Prompt fetch error:", error)
-          setPrompts([])
-        } else {
-          setPrompts(data ?? [])
-        }
+        if (error) setPrompts([])
+        else setPrompts(data ?? [])
       } catch (err) {
-        console.error("Unexpected prompt error:", err)
+        console.error(err)
         if (alive) setPrompts([])
       } finally {
         if (alive) setLoading(false)
-        console.log("Is this component alive?", alive)
+        console.log("[UserPrompts] load finished, alive:", alive)
       }
     }
 
-    loadPrompts(user.id)
+    loadPrompts()
 
-    return () => {
-      alive = false
-    }
-  }, [authLoading, user])
+    return () => { alive = false }
+  }, [user])
 
   if (authLoading) return <div>Checking session…</div>
   if (loading) return <div>Loading prompts…</div>
