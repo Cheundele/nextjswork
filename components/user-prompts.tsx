@@ -25,6 +25,7 @@ export default function UserPrompts() {
     }
 
     const userId = user.id
+    console.log("[User]", userId)
     let alive = true
 
     async function loadPrompts() {
