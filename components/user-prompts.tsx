@@ -17,37 +17,37 @@ export default function UserPrompts() {
 
   useEffect(() => {
     if (authLoading) return
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     const userId = user.id
 
-    let cancelled = false
+    let alive = true
 
     async function loadPrompts() {
-      try {
-        const { data, error } = await supabase
-          .from("memberprompts")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
+      const { data, error } = await supabase
+        .from("memberprompts")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
 
-        if (!cancelled && !error) {
-          setPrompts(data ?? [])
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
+      if (alive && !error) {
+        setPrompts(data ?? [])
+        setLoading(false)
       }
     }
 
     loadPrompts()
 
     return () => {
-      cancelled = true
+      alive = false
     }
-  }, [user, authLoading])
+  }, [authLoading, user])
 
-
-  if (loading) return <div>Loading prompts...</div>
+  if (authLoading) return <div>Checking session…</div>
+  if (loading) return <div>Loading prompts…</div>
 
   async function insertPrompt() {
     if (!user) return
