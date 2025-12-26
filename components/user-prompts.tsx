@@ -16,10 +16,8 @@ export default function UserPrompts() {
   const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    // 🚨 DO NOTHING until auth is settled
     if (authLoading) return
 
-    // Auth finished, but user is logged out
     if (!user) {
       setPrompts([])
       setLoading(false)
@@ -27,28 +25,35 @@ export default function UserPrompts() {
     }
 
     const userId = user.id
-
     let alive = true
 
     async function loadPrompts() {
       setLoading(true)
 
-      const { data, error } = await supabase
-        .from("memberprompts")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from("memberprompts")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
 
-      if (!alive) return
+        if (!alive) return
 
-      if (error) {
-        console.error("Prompt fetch error:", error)
-        setPrompts([])
-      } else {
-        setPrompts(data ?? [])
+        if (error) {
+          console.error("Prompt fetch error:", error)
+          setPrompts([])
+        } else {
+          setPrompts(data ?? [])
+        }
+      } catch (err) {
+        console.error("Unexpected prompt error:", err)
+        if (alive) setPrompts([])
+      } finally {
+        if (alive) {
+          console.log("[UserPrompts] setLoading(false)")
+          setLoading(false)
+        }
       }
-
-      setLoading(false)
     }
 
     loadPrompts()
