@@ -27,14 +27,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log("[AuthProvider] mounted")
     let mounted = true
 
     async function loadSession() {
+      console.log("[AuthProvider] loadSession start")
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession()
+
         const currentUser = session?.user ?? null
+        console.log("[AuthProvider] getSession user:", currentUser)
         if (!mounted) return
 
         setUser(currentUser)
@@ -45,9 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select("id, display_name")
             .eq("id", currentUser.id)
             .single()
-
+          console.log("[AuthProvider] profile fetch:", profileData, "error:", error)
           if (!mounted) return
-          setProfile(!error ? profileData ?? null : null)
+          setProfile(error ? null : profileData ?? null)
         }
       } catch (err) {
         console.error("[AuthProvider] getSession error:", err)
@@ -55,7 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
         setProfile(null)
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) {
+          console.log("[AuthProvider] setLoading(false)")
+          setLoading(false)
+        }
       }
     }
 
@@ -63,12 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log("[AuthProvider] onAuthStateChange event:", _event, "session:", session)
         if (!mounted) return
 
         const newUser = session?.user ?? null
         setUser(newUser)
 
         if (!newUser) {
+          console.log("[AuthProvider] user logged out")
           setProfile(null)
           setLoading(false)
           return
@@ -80,15 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select("id, display_name")
             .eq("id", newUser.id)
             .single()
-
+          console.log("[AuthProvider] profile fetch on event:", profileData, "error:", error)
           if (!mounted) return
-          setProfile(!error ? profileData ?? null : null)
+          setProfile(error ? null : profileData ?? null)
         } catch (err) {
-          console.error("[AuthProvider] profile fetch error:", err)
+          console.error("[AuthProvider] profile fetch error on event:", err)
           if (!mounted) return
           setProfile(null)
         } finally {
-          if (mounted) setLoading(false)
+          if (mounted) {
+            console.log("[AuthProvider] setLoading(false) after event")
+            setLoading(false)
+          }
         }
       }
     )
@@ -96,8 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false
       listener.subscription.unsubscribe()
+      console.log("[AuthProvider] unmounted and unsubscribed")
     }
   }, [])
+
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>

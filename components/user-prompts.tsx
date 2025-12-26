@@ -13,9 +13,11 @@ export default function UserPrompts() {
   const [loading, setLoading] = useState(true)
   const [textAreaData, setTextAreaData] = useState("")
 
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
+    console.log("[UserPrompts] effect fired, authLoading:", authLoading, "user:", user)
+    if (authLoading) return
     if (!user?.id) {
       setPrompts([])
       setLoading(false)
@@ -23,11 +25,10 @@ export default function UserPrompts() {
     }
 
     const userId = user.id
-    console.log("[USER_ID]", userId)
-
     let alive = true
 
     async function loadPrompts() {
+      console.log("[UserPrompts] loadPrompts start for user:", userId)
       setLoading(true)
       try {
         const { data, error } = await supabase
@@ -37,23 +38,25 @@ export default function UserPrompts() {
           .order("created_at", { ascending: false })
 
         if (!alive) return
-        setPrompts(!error && data ? data : [])
+        console.log("[UserPrompts] fetched prompts:", data, "error:", error)
+        setPrompts(error ? [] : data ?? [])
       } catch (err) {
         console.error("[UserPrompts] fetch error:", err)
         if (alive) setPrompts([])
       } finally {
-        if (alive) setLoading(false)
+        if (alive) {
+          console.log("[UserPrompts] setLoading(false)")
+          setLoading(false)
+        }
       }
     }
 
     loadPrompts()
 
-    return () => {
-      alive = false
-    }
-  }, [user])
+    return () => { alive = false }
+  }, [user, authLoading])
 
-  if (!user) return <div>Please log in to see your prompts.</div>
+  if (authLoading) return <div>Checking session…</div>
   if (loading) return <div>Loading prompts…</div>
 
   async function insertPrompt() {
