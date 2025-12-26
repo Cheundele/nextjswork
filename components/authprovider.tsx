@@ -26,83 +26,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let mounted = true
-    console.log("[Auth] useEffect mounted")
+ useEffect(() => {
+  let mounted = true
+  console.log("[Auth] useEffect mounted")
 
-    async function initAuth() {
-      console.log("[Auth] init start")
-      //await new Promise(res => setTimeout(res, 50))
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        console.log("[Auth] session:", session)
-        const currentUser = session?.user ?? null
-        console.log("[Auth] currentUser:", currentUser)
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("[Auth] auth event:", _event)
 
-        if (!mounted) return
+      if (!mounted) return
 
-        setUser(currentUser)
+      const user = session?.user ?? null
+      setUser(user)
 
-        if (currentUser) {
-          console.log("[Auth] loading profile...")
-          // load profile
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("id, display_name")
-            .eq("id", currentUser.id)
-            .single()
-
-          console.log("[Auth] profileData:", profileData)
-
-          if (!mounted) return
-
-          setProfile(profileData ?? null)
-        }
-      } catch (err) {
-        console.error("[Auth] initAuth error:", err)
-      } finally {
-        if (mounted) {
-          console.log("[Auth] setLoading(false)")
-          setLoading(false)
-        }
-      }
-    }
-
-    initAuth()
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!mounted) return
-
-        const newUser = session?.user ?? null
-        setUser(newUser ?? null)
-
-        if (!newUser) {
-          setProfile(null)
-          setLoading(false)
-          return
-        }
-
-        // 3️⃣ Load profile
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .eq("id", newUser.id)
-          .single()
-
-        if (!mounted) return
-
-        setProfile(profileData ?? null)
+      if (!user) {
+        setProfile(null)
         setLoading(false)
+        return
       }
-    )
 
-    return () => {
-      console.log("[Auth] unmount")
-      mounted = false
-      listener.subscription.unsubscribe()
-    }
-  }, [])
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .eq("id", user.id)
+        .single()
+
+      if (!mounted) return
+
+      if (!error) setProfile(profileData ?? null)
+      setLoading(false)
+    })
+
+  return () => {
+    mounted = false
+    subscription.unsubscribe()
+  }
+}, [])
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
