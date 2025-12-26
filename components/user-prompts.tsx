@@ -16,16 +16,9 @@ export default function UserPrompts() {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false)
-      return
-    }
-  
-    const userId = user.id 
-
     let cancelled = false
 
-    async function loadPrompts() {
+    async function loadPrompts(userId: string) {
       setLoading(true)
 
       try {
@@ -35,11 +28,12 @@ export default function UserPrompts() {
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
 
-        if (!cancelled && !error && data) {
-          setPrompts(data)
+        if (!cancelled && !error) {
+          setPrompts(data ?? [])
         }
       } catch (err) {
         console.error("Prompt load error:", err)
+        if (!cancelled) setPrompts([])
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -47,12 +41,19 @@ export default function UserPrompts() {
       }
     }
 
-    loadPrompts()
+    if (!user) {
+      // IMPORTANT: reset state when auth disappears
+      setPrompts([])
+      setLoading(false)
+      return
+    }
+
+    loadPrompts(user.id)
 
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user?.id])
 
 
   if (loading) return <div>Loading prompts...</div>
