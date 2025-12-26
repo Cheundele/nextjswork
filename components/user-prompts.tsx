@@ -24,6 +24,9 @@ export default function UserPrompts() {
       return
     }
 
+    const userId = user.id
+    console.log("[USER_ID]", userId)
+
     let alive = true
     async function loadPrompts() {
       setLoading(true)
@@ -31,7 +34,7 @@ export default function UserPrompts() {
         const { data, error } = await supabase
           .from("memberprompts")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
 
         if (!alive) return
