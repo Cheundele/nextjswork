@@ -13,14 +13,17 @@ export default function UserPrompts() {
   const [loading, setLoading] = useState(true)
   const [textAreaData, setTextAreaData] = useState("")
 
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
+    if (authLoading) return
+    if (!user) return
+
+    const userId = user.id
+
     let cancelled = false
 
-    async function loadPrompts(userId: string) {
-      setLoading(true)
-
+    async function loadPrompts() {
       try {
         const { data, error } = await supabase
           .from("memberprompts")
@@ -31,29 +34,17 @@ export default function UserPrompts() {
         if (!cancelled && !error) {
           setPrompts(data ?? [])
         }
-      } catch (err) {
-        console.error("Prompt load error:", err)
-        if (!cancelled) setPrompts([])
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
-    if (!user) {
-      // IMPORTANT: reset state when auth disappears
-      setPrompts([])
-      setLoading(false)
-      return
-    }
-
-    loadPrompts(user.id)
+    loadPrompts()
 
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [user, authLoading])
 
 
   if (loading) return <div>Loading prompts...</div>
