@@ -34,13 +34,11 @@ useEffect(() => {
       console.log("[Auth] auth event:", event)
 
       const user = session?.user ?? null
-      setUser(user)
-
-      // IMPORTANT: clear loading immediately
-      setLoading(false)
+      setUser(user)          
 
       if (!user) {
         setProfile(null)
+        setLoading(false)
         return
       }
 
@@ -55,6 +53,8 @@ useEffect(() => {
       } else {
         setProfile(null)
       }
+
+      setLoading(false)
     })
 
   return () => {
