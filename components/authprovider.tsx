@@ -27,6 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log("[Auth] FORCE CLEAR LOADING")
+    setLoading(false)
+  }, [])
+
+  /*useEffect(() => {
     let mounted = true
     console.log("[Auth] useEffect mounted")
 
@@ -51,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const user = session?.user ?? null
         setUser(user)
+        console.log("[Auth] user: ", user)
 
         if (!user) {
           setProfile(null)
@@ -74,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [])*/
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
