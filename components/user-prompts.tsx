@@ -15,22 +15,19 @@ export default function UserPrompts() {
 
   const { user, loading: authLoading } = useAuth()
 
+  // Load prompts whenever auth finishes and user is available
   useEffect(() => {
-    if (authLoading) return
-
+    if (authLoading) return // wait until auth is settled
     if (!user) {
       setPrompts([])
       setLoading(false)
       return
     }
 
-    const userId = user.id
-    console.log("[User]", userId)
     let alive = true
 
-    async function loadPrompts() {
+    async function loadPrompts(userId: string) {
       setLoading(true)
-
       try {
         const { data, error } = await supabase
           .from("memberprompts")
@@ -50,14 +47,11 @@ export default function UserPrompts() {
         console.error("Unexpected prompt error:", err)
         if (alive) setPrompts([])
       } finally {
-        if (alive) {
-          console.log("[UserPrompts] setLoading(false)")
-          setLoading(false)
-        }
+        if (alive) setLoading(false)
       }
     }
 
-    loadPrompts()
+    loadPrompts(user.id)
 
     return () => {
       alive = false
@@ -65,7 +59,7 @@ export default function UserPrompts() {
   }, [authLoading, user])
 
   if (authLoading) return <div>Checking session…</div>
-  //if (loading) return <div>Loading prompts…</div>
+  if (loading) return <div>Loading prompts…</div>
 
   async function insertPrompt() {
     if (!user) return
