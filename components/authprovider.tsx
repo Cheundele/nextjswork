@@ -28,39 +28,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true
+    console.log("[Auth] useEffect mounted")
 
     async function initAuth() {
+      console.log("[Auth] init start")
       //await new Promise(res => setTimeout(res, 50))
-      const { data: { session } } = await supabase.auth.getSession()
-      const currentUser = session?.user ?? null
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log("[Auth] session:", session)
+        const currentUser = session?.user ?? null
+        console.log("[Auth] currentUser:", currentUser)
 
-      if (!mounted) return
+        if (!mounted) return
 
-      setUser(currentUser)
+        setUser(currentUser)
 
-      if (currentUser) {
-        // load profile
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .eq("id", currentUser.id)
-          .single()
+        if (currentUser) {
+          console.log("[Auth] loading profile...")
+          // load profile
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id, display_name")
+            .eq("id", currentUser.id)
+            .single()
 
-        if (mounted) {
+          console.log("[Auth] profileData:", profileData)
+
+          if (!mounted) return
+
           setProfile(profileData ?? null)
         }
-        else {
-          setProfile(null)
+      } catch (err) {
+        console.error("[Auth] initAuth error:", err)
+      } finally {
+        if (mounted) {
+          console.log("[Auth] setLoading(false)")
+          setLoading(false)
         }
       }
-
-      setLoading(false)
     }
 
     initAuth()
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!mounted) return
+
         const newUser = session?.user ?? null
         setUser(newUser ?? null)
 
@@ -77,12 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("id", newUser.id)
           .single()
 
+        if (!mounted) return
+
         setProfile(profileData ?? null)
         setLoading(false)
       }
     )
 
     return () => {
+      console.log("[Auth] unmount")
       mounted = false
       listener.subscription.unsubscribe()
     }
