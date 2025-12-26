@@ -13,11 +13,9 @@ export default function UserPrompts() {
   const [loading, setLoading] = useState(true)
   const [textAreaData, setTextAreaData] = useState("")
 
-  const { user, loading: authLoading } = useAuth()
+  const { user } = useAuth()
 
-  // Load prompts whenever auth finishes and user is available
   useEffect(() => {
-    console.log("[UserPrompts] user changed:", user)
     if (!user?.id) {
       setPrompts([])
       setLoading(false)
@@ -28,6 +26,7 @@ export default function UserPrompts() {
     console.log("[USER_ID]", userId)
 
     let alive = true
+
     async function loadPrompts() {
       setLoading(true)
       try {
@@ -38,24 +37,23 @@ export default function UserPrompts() {
           .order("created_at", { ascending: false })
 
         if (!alive) return
-
-        if (error) setPrompts([])
-        else setPrompts(data ?? [])
+        setPrompts(!error && data ? data : [])
       } catch (err) {
-        console.error(err)
+        console.error("[UserPrompts] fetch error:", err)
         if (alive) setPrompts([])
       } finally {
         if (alive) setLoading(false)
-        console.log("[UserPrompts] load finished, alive:", alive)
       }
     }
 
     loadPrompts()
 
-    return () => { alive = false }
+    return () => {
+      alive = false
+    }
   }, [user])
 
-  if (authLoading) return <div>Checking session…</div>
+  if (!user) return <div>Please log in to see your prompts.</div>
   if (loading) return <div>Loading prompts…</div>
 
   async function insertPrompt() {

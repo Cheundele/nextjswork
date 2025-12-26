@@ -29,13 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // 1️⃣ Fetch current session on mount (handles refresh)
     async function loadSession() {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession()
-
         const currentUser = session?.user ?? null
         if (!mounted) return
 
@@ -47,10 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select("id, display_name")
             .eq("id", currentUser.id)
             .single()
-          if (!mounted) return
 
-          if (!error) setProfile(profileData ?? null)
-          else setProfile(null)
+          if (!mounted) return
+          setProfile(!error ? profileData ?? null : null)
         }
       } catch (err) {
         console.error("[AuthProvider] getSession error:", err)
@@ -64,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     loadSession()
 
-    // 2️⃣ Subscribe to future auth events
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!mounted) return
@@ -84,10 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select("id, display_name")
             .eq("id", newUser.id)
             .single()
-          if (!mounted) return
 
-          if (!error) setProfile(profileData ?? null)
-          else setProfile(null)
+          if (!mounted) return
+          setProfile(!error ? profileData ?? null : null)
         } catch (err) {
           console.error("[AuthProvider] profile fetch error:", err)
           if (!mounted) return
