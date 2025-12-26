@@ -17,7 +17,10 @@ export default function UserPrompts() {
 
   // Load prompts whenever auth finishes and user is available
   useEffect(() => {
+    console.log("[AUTH_LOADING", authLoading)
     if (authLoading) return // wait until auth is settled
+
+    console.log("[USER]", user)
     if (!user) {
       setPrompts([])
       setLoading(false)
