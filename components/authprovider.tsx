@@ -29,43 +29,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log("[AuthProvider] mounted")
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("[AuthProvider] onAuthStateChange event:", event)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[AuthProvider] onAuthStateChange event:", event);
 
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
 
-        if (!currentUser) {
-          console.log("[AuthProvider] user is null, clearing profile")
-          setProfile(null)
-          setLoading(false)
-          return
-        }
+      if (!currentUser) {
+        console.log("[AuthProvider] user is null, clearing profile");
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
 
-        console.log("[AuthProvider] fetching profile for user:", currentUser.id)
+      // async function called inside synchronous listener
+      (async () => {
+        console.log("[AuthProvider] fetching profile for user:", currentUser.id);
         try {
           const { data: profileData, error } = await supabase
             .from("profiles")
             .select("id, display_name")
             .eq("id", currentUser.id)
-            .single()
+            .single();
 
           if (error) {
-            console.error("[AuthProvider] profile fetch error:", error)
-            setProfile(null)
+            console.error("[AuthProvider] profile fetch error:", error);
+            setProfile(null);
           } else {
-            console.log("[AuthProvider] profile loaded:", profileData)
-            setProfile(profileData)
+            console.log("[AuthProvider] profile loaded:", profileData);
+            setProfile(profileData);
           }
         } catch (err) {
-          console.error("[AuthProvider] unexpected profile fetch error:", err)
-          setProfile(null)
+          console.error("[AuthProvider] unexpected profile fetch error:", err);
+          setProfile(null);
         } finally {
-          setLoading(false)
+          setLoading(false);
         }
-      }
-    )
+      })();
+    });
 
     return () => {
       console.log("[AuthProvider] unsubscribing auth listener")
