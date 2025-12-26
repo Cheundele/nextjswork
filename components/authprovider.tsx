@@ -26,22 +26,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
- useEffect(() => {
-  let mounted = true
+useEffect(() => {
   console.log("[Auth] provider mounted")
 
   const { data: { subscription } } =
     supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("[Auth] auth event:", event)
 
-      if (!mounted) return
-
       const user = session?.user ?? null
       setUser(user)
 
+      // IMPORTANT: clear loading immediately
+      setLoading(false)
+
       if (!user) {
         setProfile(null)
-        setLoading(false)
         return
       }
 
@@ -51,23 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", user.id)
         .single()
 
-      if (!mounted) return
-
       if (!error) {
         setProfile(profileData ?? null)
       } else {
         setProfile(null)
       }
-
-      setLoading(false)
     })
 
   return () => {
-    mounted = false
     subscription.unsubscribe()
   }
 }, [])
-
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
