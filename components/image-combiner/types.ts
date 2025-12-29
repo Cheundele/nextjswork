@@ -11,6 +11,7 @@ export interface Generation {
   progress: number
   imageUrl: string | null
   prompt: string
+  createdAt: string
   error?: string
   timestamp: number
   abortController?: AbortController

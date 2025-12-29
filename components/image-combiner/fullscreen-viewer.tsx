@@ -1,6 +1,7 @@
 "use client"
 
-import type { Generation } from "./hooks/use-image-generation"
+//import type { Generation } from "./hooks/use-image-generation"
+import type { Generation } from "../../components/image-combiner/types"
 
 interface FullscreenViewerProps {
   imageUrl: string
