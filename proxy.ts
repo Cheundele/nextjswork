@@ -1,5 +1,18 @@
 import { updateSession } from "@/lib/supabase/proxy";
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl.clone();
+
+  // Block or redirect /prompts to homepage
+  if (url.pathname === "/prompts") {
+    url.pathname = "/"; // redirect to homepage or any page you want
+    return NextResponse.redirect(url);
+  }
+
+  // Otherwise, continue normally
+  return NextResponse.next();
+}
 
 export async function proxy(request: NextRequest) {
   return await updateSession(request);
