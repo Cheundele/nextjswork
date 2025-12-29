@@ -12,6 +12,8 @@ export interface Generation {
   imageUrl: string | null
   prompt: string
   createdAt?: string
+  aspectRatio?: string
+  mode?: string
   error?: string
   timestamp: number
   abortController?: AbortController

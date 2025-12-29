@@ -32,12 +32,12 @@ interface InputSectionProps {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
   onPromptPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void
   onImageFullscreen: (url: string) => void
-  promptTextareaRef: React.RefObject<HTMLTextAreaElement>
-  isAuthenticated: boolean
-  remaining: number
-  decrementOptimistic: () => void
-  usageLoading: boolean
-  onShowAuthModal: () => void
+  promptTextareaRef: React.RefObject<HTMLTextAreaElement | null>
+  isAuthenticated?: boolean
+  remaining?: number
+  decrementOptimistic?: () => void
+  usageLoading?: boolean
+  onShowAuthModal?: () => void
   generations: any[]
   selectedGenerationId: string | null
   onSelectGeneration: (id: string) => void
@@ -202,7 +202,7 @@ export function InputSection({
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
                   <ImageUploadBox
                     imageNumber={1}
-                    preview={image1Preview}
+                    preview={image1Preview ?? undefined}
                     onDrop={(e) => {
                       e.preventDefault()
                       const file = e.dataTransfer.files[0]
@@ -235,7 +235,7 @@ export function InputSection({
 
                   <ImageUploadBox
                     imageNumber={2}
-                    preview={image2Preview}
+                    preview={image2Preview ?? undefined}
                     onDrop={(e) => {
                       e.preventDefault()
                       const file = e.dataTransfer.files[0]

@@ -18,6 +18,7 @@ interface UseImageGenerationProps {
   addGeneration: (generation: Generation) => Promise<void>
   onToast: (message: string, type?: "success" | "error") => void
   onImageUpload: (file: File, imageNumber: 1 | 2) => Promise<void>
+  onOutOfCredits?: () => void
   onApiKeyMissing?: () => void
 }
 

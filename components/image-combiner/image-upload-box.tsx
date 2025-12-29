@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 interface ImageUploadBoxProps {
   imageNumber: 1 | 2
-  preview: string
+  preview?: string
   onDrop: (e: React.DragEvent) => void
   onClear: () => void
   onSelect: () => void

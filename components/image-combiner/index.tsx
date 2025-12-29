@@ -107,9 +107,9 @@ export function ImageCombiner() {
       ? { url: selectedGeneration.imageUrl, prompt: selectedGeneration.prompt }
       : null
 
-  const hasImages = useUrls ? image1Url || image2Url : image1 || image2
+  const hasImages = Boolean(useUrls ? image1Url || image2Url : image1 || image2)
   const currentMode = hasImages ? "image-editing" : "text-to-image"
-  const canGenerate = prompt.trim().length > 0 && (currentMode === "text-to-image" || (useUrls ? image1Url : image1))
+  const canGenerate = prompt.trim().length > 0 && (currentMode === "text-to-image" || Boolean(useUrls ? image1Url : image1))
 
   useEffect(() => {
     if (selectedGeneration?.status === "complete" && selectedGeneration?.imageUrl) {
@@ -749,7 +749,7 @@ export function ImageCombiner() {
                     <div className="hidden xl:block mt-3 flex-shrink-0">
                       <GenerationHistory
                         generations={persistedGenerations}
-                        selectedId={selectedGenerationId}
+                        selectedId={selectedGenerationId ?? undefined}
                         onSelect={setSelectedGenerationId}
                         onCancel={cancelGeneration}
                         onDelete={deleteGeneration}
@@ -800,7 +800,7 @@ export function ImageCombiner() {
                 <div className="xl:hidden flex-shrink-0">
                   <GenerationHistory
                     generations={persistedGenerations}
-                    selectedId={selectedGenerationId}
+                    selectedId={selectedGenerationId ?? undefined}
                     onSelect={setSelectedGenerationId}
                     onCancel={cancelGeneration}
                     onDelete={deleteGeneration}

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "./progress-bar"
 import { useMobile } from "@/hooks/use-mobile"
-import type { Generation } from "./hooks/use-image-generation"
+
+import type { Generation } from "../../components/image-combiner/types"
 import { useEffect } from "react"
 
 interface OutputSectionProps {
