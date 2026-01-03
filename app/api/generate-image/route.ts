@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
+
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import OpenAI from "openai";
 
 //export const dynamic = 'force-dynamic';
 
@@ -23,6 +25,30 @@ interface ErrorResponse {
   error: string;
   message?: string;
   details?: string;
+}
+
+const openAiApiKey = process.env.OPENAI_API_KEY;
+
+const chatgpt = new OpenAI({
+  apiKey: openAiApiKey,
+});
+
+async function rewritePromptWithChatGPT(userPrompt: string): Promise<string> {
+  const completion = await chatgpt.responses.create({
+    model: "gpt-4.1-mini",
+    input: [
+      {
+        role: "system",
+        content: "Rewrite this prompt for image generation.",
+      },
+      {
+        role: "user",
+        content: userPrompt,
+      },
+    ],
+  });
+
+  return completion.output_text?.trim() ?? userPrompt;
 }
 
 export async function POST(request: NextRequest) {
@@ -105,6 +131,8 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      const finalizedPrompt = await rewritePromptWithChatGPT(imageGenerationPrompt);
+
       const imageFiles =
         result.files?.filter((f) => f.mediaType?.startsWith('image/')) || [];
 
@@ -123,7 +151,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json<GenerateImageResponse>({
         url: imageUrl,
-        prompt: prompt,
+        prompt: finalizedPrompt,
         description: result.text || '',
       });
     } else if (mode === 'image-editing') {
@@ -146,9 +174,8 @@ export async function POST(request: NextRequest) {
         if (image1.size > MAX_FILE_SIZE) {
           return NextResponse.json<ErrorResponse>(
             {
-              error: `Image 1 too large. Maximum ${
-                MAX_FILE_SIZE / 1024 / 1024
-              }MB allowed.`,
+              error: `Image 1 too large. Maximum ${MAX_FILE_SIZE / 1024 / 1024
+                }MB allowed.`,
             },
             { status: 400 }
           );
@@ -168,9 +195,8 @@ export async function POST(request: NextRequest) {
         if (image2.size > MAX_FILE_SIZE) {
           return NextResponse.json<ErrorResponse>(
             {
-              error: `Image 2 too large. Maximum ${
-                MAX_FILE_SIZE / 1024 / 1024
-              }MB allowed.`,
+              error: `Image 2 too large. Maximum ${MAX_FILE_SIZE / 1024 / 1024
+                }MB allowed.`,
             },
             { status: 400 }
           );
